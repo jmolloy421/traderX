@@ -18,8 +18,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "sbom": "cyclonedx-npm --output-file build/reports/sbom.json --output-format JSON",
-    "sbom:xml": "cyclonedx-npm --output-file build/reports/sbom.xml --output-format XML"
+    "sbom": "node -e \"require('fs').mkdirSync('build/reports',{recursive:true})\" && cyclonedx-npm --output-file build/reports/sbom.json --output-format JSON",
+    "sbom:xml": "node -e \"require('fs').mkdirSync('build/reports',{recursive:true})\" && cyclonedx-npm --output-file build/reports/sbom.xml --output-format XML"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.12",
