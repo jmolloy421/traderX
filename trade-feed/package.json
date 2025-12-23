@@ -23,7 +23,7 @@
     "@opentelemetry/resources": "^1.30.0",
     "@opentelemetry/semantic-conventions": "^1.28.0"
   },
-  "devDependencies": {
-    "@cyclonedx/cyclonedx-npm": "^1.19.3"
-  }
+    "devDependencies": {
+      "@cyclonedx/cyclonedx-npm": "^4.1.2"
+    }
 }

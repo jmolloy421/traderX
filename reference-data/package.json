@@ -37,8 +37,8 @@
     "@opentelemetry/resources": "^1.30.0",
     "@opentelemetry/semantic-conventions": "^1.28.0"
   },
-  "devDependencies": {
-    "@cyclonedx/cyclonedx-npm": "^1.19.3",
+    "devDependencies": {
+      "@cyclonedx/cyclonedx-npm": "^4.1.2",
     "@nestjs/cli": "^11.0.5",
     "@nestjs/schematics": "^11.0.2",
     "@nestjs/testing": "^11.0.12",
