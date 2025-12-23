@@ -6,7 +6,7 @@
 
 This is designed to play the role of a SQL database that runs standalone as part of an example environment. The other processes in this environment interact with this via SQL / JDBC drivers and therefore this component can be swapped out in other iterations of this environment and replaced with a robust and productionizable RDBMS.
 
-This uses H2 Java-based database as a standalone server, has NO authentication by default, and initializes with an empty SQL schema every time it is started.
+This uses H2 Java-based database as a standalone server, has NO authentication by default, and initializes with the SQL schema on first startup. Data is persisted across container restarts using a Docker volume.
 
 ## Default Port Numbers
 | Protocol | Port Number |
@@ -30,8 +30,33 @@ The database you want to use in the H2 GUI is `./traderx` (This may not be the d
 ## Using Web Console behind proxy/K8S/Env
 By default, the hostname, localhost, 127.0.0.1 are all valid host headers to access the database. If you wish to connect using another IP, or via some proxy/gateway that's set up through K8S or other environment, you will need to specify the hostname your browser is using to access the web console. This is done by setting the environment variable `$DATABASE_WEB_HOSTNAMES` to the hostname you are using to access the web console. This is a comma-delimited list of fully qualified hostnames.
 
+## Data Persistence
+
+Data is stored in the `./_data` directory. When running with Docker Compose, this directory is mounted as a named volume (`traderx-db-data`) so data persists across container restarts.
+
+### DATABASE_INIT Environment Variable
+
+The `DATABASE_INIT` environment variable controls schema initialization behavior:
+
+| Value | Behavior |
+| :--- | :--- |
+| `if-empty` (default) | Only run schema initialization if the database file doesn't exist |
+| `always` | Force schema initialization on every startup (destroys all existing data) |
+| `never` | Never run schema initialization |
+
+To reset the database to its initial state:
+```shell
+# Option 1: Set DATABASE_INIT=always for one restart
+DATABASE_INIT=always docker-compose up database
+
+# Option 2: Delete the Docker volume
+docker-compose down
+docker volume rm traderx_traderx-db-data
+docker-compose up
+```
+
 ## Output Directory
-Data is stored in the local `./_data` directory from where the script is run. This is .gitignore'd 
+Data is stored in the local `./_data` directory from where the script is run. This is .gitignore'd
 
 ## Building
 

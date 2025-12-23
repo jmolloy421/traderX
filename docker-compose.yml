@@ -3,6 +3,11 @@ services:
     restart: always
     environment:
       - DATABASE_WEB_HOSTNAMES=${TRADERX_FQDN:-localhost}
+      # DATABASE_INIT controls schema initialization:
+      # - "if-empty" (default): Only initialize if database doesn't exist
+      # - "always": Force reset on every restart (destroys all data)
+      # - "never": Never run initialization script
+      - DATABASE_INIT=${DATABASE_INIT:-if-empty}
     image: database
     build:
       context: database
@@ -19,6 +24,8 @@ services:
     volumes:
       # Mount the root folder that contains .git
       - .:/workspace:cached
+      # Persistent volume for H2 database files
+      - traderx-db-data:/database/_data
     command: ./run.sh
     networks:
       - localnet
@@ -213,3 +220,7 @@ services:
 networks:
   localnet:
     driver: bridge
+
+volumes:
+  traderx-db-data:
+    driver: local
