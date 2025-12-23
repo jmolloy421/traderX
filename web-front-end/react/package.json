@@ -44,8 +44,8 @@
       "last 1 safari version"
     ]
   },
-  "devDependencies": {
-    "@cyclonedx/cyclonedx-npm": "^1.19.3",
+    "devDependencies": {
+      "@cyclonedx/cyclonedx-npm": "^4.1.2",
     "@emotion/react": "^11.10.8",
     "@emotion/styled": "^11.10.8",
     "@heswell/salt-lab": "^1.0.0-alpha.2",
