@@ -1,25 +1,23 @@
 services:
   database:
     restart: always
+    image: postgres:15-alpine
     environment:
-      - DATABASE_WEB_HOSTNAMES=${TRADERX_FQDN:-localhost}
-    image: database
-    build:
-      context: database
-      dockerfile: Dockerfile
-    working_dir: /database
+      - POSTGRES_DB=${DATABASE_NAME:-traderx}
+      - POSTGRES_USER=${DATABASE_USER:-traderx}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD:-traderx}
     expose:
-      - 18082
-      - 18083
-      - 18084
+      - 5432
     ports:
-      - 18082:18082
-      - 18083:18083
-      - 18084:18084
+      - 5432:5432
     volumes:
-      # Mount the root folder that contains .git
-      - .:/workspace:cached
-    command: ./run.sh
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-traderx} -d ${DATABASE_NAME:-traderx}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - localnet
   reference-data:
@@ -84,7 +82,11 @@ services:
     ports:
       - 18088:18088
     environment:
-      - DATABASE_TCP_HOST=database
+      - DATABASE_HOST=database
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=${DATABASE_NAME:-traderx}
+      - DATABASE_USER=${DATABASE_USER:-traderx}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-traderx}
       - PEOPLE_SERVICE_HOST=people-service
     volumes:
       # Mount the root folder that contains .git
@@ -93,8 +95,10 @@ services:
     networks:
       - localnet
     depends_on:
-      - database
-      - people-service
+      database:
+        condition: service_healthy
+      people-service:
+        condition: service_started
   position-service:
     restart: always
     image: position-service
@@ -107,7 +111,11 @@ services:
     ports:
       - 18090:18090
     environment:
-      - DATABASE_TCP_HOST=database
+      - DATABASE_HOST=database
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=${DATABASE_NAME:-traderx}
+      - DATABASE_USER=${DATABASE_USER:-traderx}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-traderx}
     volumes:
       # Mount the root folder that contains .git
       - .:/workspace:cached
@@ -115,7 +123,8 @@ services:
     networks:
       - localnet
     depends_on:
-      - database
+      database:
+        condition: service_healthy
   trade-service:
     restart: always
     image: trade-service
@@ -128,7 +137,6 @@ services:
     ports:
       - 18092:18092
     environment:
-      - DATABASE_TCP_HOST=database
       - PEOPLE_SERVICE_HOST=people-service
       - ACCOUNT_SERVICE_HOST=account-service
       - REFERENCE_DATA_HOST=reference-data
@@ -140,11 +148,14 @@ services:
     networks:
       - localnet
     depends_on:
-      - database
-      - people-service
-      - account-service
-      - reference-data
-      - trade-feed
+      people-service:
+        condition: service_started
+      account-service:
+        condition: service_started
+      reference-data:
+        condition: service_started
+      trade-feed:
+        condition: service_started
   trade-processor:
     restart: always
     image: trade-processor
@@ -157,7 +168,11 @@ services:
     ports:
       - 18091:18091
     environment:
-      - DATABASE_TCP_HOST=database
+      - DATABASE_HOST=database
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=${DATABASE_NAME:-traderx}
+      - DATABASE_USER=${DATABASE_USER:-traderx}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-traderx}
       - TRADE_FEED_HOST=trade-feed
     volumes:
       # Mount the root folder that contains .git
@@ -166,8 +181,10 @@ services:
     networks:
       - localnet
     depends_on:
-      - database
-      - trade-feed
+      database:
+        condition: service_healthy
+      trade-feed:
+        condition: service_started
   web-front-end-angular:
     restart: always
     image: web-front-end-angular
@@ -213,3 +230,6 @@ services:
 networks:
   localnet:
     driver: bridge
+
+volumes:
+  postgres_data:
