@@ -9,20 +9,6 @@ plugins {
   id 'java'
   id 'org.springframework.boot' version '3.5.7'
   id 'io.spring.dependency-management' version '1.1.7'
-  id 'org.cyclonedx.bom' version '1.10.0'
-}
-
-cyclonedxBom {
-    includeConfigs = ["runtimeClasspath"]
-    skipConfigs = ["testCompileClasspath", "testRuntimeClasspath"]
-    projectType = "application"
-    schemaVersion = "1.5"
-    destination = file("build/reports")
-    outputName = "sbom"
-    outputFormat = "all"
-    includeBomSerialNumber = true
-    includeLicenseText = false
-    componentVersion = version
 }
 
 group = 'finos.traderx.position-service'
@@ -36,7 +22,7 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    runtimeOnly 'org.postgresql:postgresql:42.7.4'
+    implementation 'com.h2database:h2:2.4.240'
     implementation ('org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14') {
         exclude group: 'org.webjars', module: 'swagger-ui'
     }
