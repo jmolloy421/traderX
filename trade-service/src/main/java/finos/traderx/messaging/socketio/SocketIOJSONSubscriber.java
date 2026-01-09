@@ -136,7 +136,6 @@ public abstract class SocketIOJSONSubscriber<T> implements Subscriber<T>, Initia
                 } catch (Exception x) {
                     log.error("Threw exception while handling incoming message", x);
                 }
-                log.info("Connection Error");
             }
         });
         s.connect();
