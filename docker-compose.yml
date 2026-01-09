@@ -1,25 +1,23 @@
 services:
   database:
     restart: always
+    image: postgres:16-alpine
     environment:
-      - DATABASE_WEB_HOSTNAMES=${TRADERX_FQDN:-localhost}
-    image: database
-    build:
-      context: database
-      dockerfile: Dockerfile
-    working_dir: /database
+      - POSTGRES_USER=sa
+      - POSTGRES_PASSWORD=sa
+      - POSTGRES_DB=traderx
     expose:
-      - 18082
-      - 18083
-      - 18084
+      - 5432
     ports:
-      - 18082:18082
-      - 18083:18083
-      - 18084:18084
+      - 5432:5432
     volumes:
-      # Mount the root folder that contains .git
-      - .:/workspace:cached
-    command: ./run.sh
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/initialSchema.sql:/docker-entrypoint-initdb.d/initialSchema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sa -d traderx"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - localnet
   reference-data:
@@ -84,7 +82,11 @@ services:
     ports:
       - 18088:18088
     environment:
-      - DATABASE_TCP_HOST=database
+      - DATABASE_HOST=database
+      - DATABASE_PORT=5432
+      - DATABASE_USER=sa
+      - DATABASE_PASSWORD=sa
+      - DATABASE_NAME=traderx
       - PEOPLE_SERVICE_HOST=people-service
     volumes:
       # Mount the root folder that contains .git
@@ -93,8 +95,10 @@ services:
     networks:
       - localnet
     depends_on:
-      - database
-      - people-service
+      database:
+        condition: service_healthy
+      people-service:
+        condition: service_started
   position-service:
     restart: always
     image: position-service
@@ -107,7 +111,11 @@ services:
     ports:
       - 18090:18090
     environment:
-      - DATABASE_TCP_HOST=database
+      - DATABASE_HOST=database
+      - DATABASE_PORT=5432
+      - DATABASE_USER=sa
+      - DATABASE_PASSWORD=sa
+      - DATABASE_NAME=traderx
     volumes:
       # Mount the root folder that contains .git
       - .:/workspace:cached
@@ -115,7 +123,8 @@ services:
     networks:
       - localnet
     depends_on:
-      - database
+      database:
+        condition: service_healthy
   trade-service:
     restart: always
     image: trade-service
@@ -128,7 +137,11 @@ services:
     ports:
       - 18092:18092
     environment:
-      - DATABASE_TCP_HOST=database
+      - DATABASE_HOST=database
+      - DATABASE_PORT=5432
+      - DATABASE_USER=sa
+      - DATABASE_PASSWORD=sa
+      - DATABASE_NAME=traderx
       - PEOPLE_SERVICE_HOST=people-service
       - ACCOUNT_SERVICE_HOST=account-service
       - REFERENCE_DATA_HOST=reference-data
@@ -140,11 +153,16 @@ services:
     networks:
       - localnet
     depends_on:
-      - database
-      - people-service
-      - account-service
-      - reference-data
-      - trade-feed
+      database:
+        condition: service_healthy
+      people-service:
+        condition: service_started
+      account-service:
+        condition: service_started
+      reference-data:
+        condition: service_started
+      trade-feed:
+        condition: service_started
   trade-processor:
     restart: always
     image: trade-processor
@@ -157,7 +175,11 @@ services:
     ports:
       - 18091:18091
     environment:
-      - DATABASE_TCP_HOST=database
+      - DATABASE_HOST=database
+      - DATABASE_PORT=5432
+      - DATABASE_USER=sa
+      - DATABASE_PASSWORD=sa
+      - DATABASE_NAME=traderx
       - TRADE_FEED_HOST=trade-feed
     volumes:
       # Mount the root folder that contains .git
@@ -166,8 +188,10 @@ services:
     networks:
       - localnet
     depends_on:
-      - database
-      - trade-feed
+      database:
+        condition: service_healthy
+      trade-feed:
+        condition: service_started
   web-front-end-angular:
     restart: always
     image: web-front-end-angular
@@ -184,8 +208,10 @@ services:
     networks:
       - localnet
     depends_on:
-      - database
-      - trade-feed
+      database:
+        condition: service_healthy
+      trade-feed:
+        condition: service_started
   ingress:
     image: ingress
     build:
@@ -201,15 +227,26 @@ services:
     networks:
       - localnet
     depends_on:
-      - database
-      - trade-feed
-      - people-service
-      - account-service
-      - position-service
-      - trade-service
-      - trade-processor
-      - web-front-end-angular
+      database:
+        condition: service_healthy
+      trade-feed:
+        condition: service_started
+      people-service:
+        condition: service_started
+      account-service:
+        condition: service_started
+      position-service:
+        condition: service_started
+      trade-service:
+        condition: service_started
+      trade-processor:
+        condition: service_started
+      web-front-end-angular:
+        condition: service_started
 
 networks:
   localnet:
     driver: bridge
+
+volumes:
+  postgres_data:

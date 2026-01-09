@@ -1,23 +1,13 @@
-# Multi-stage build for database service
-FROM eclipse-temurin:21-jdk-jammy AS builder
+# Use official PostgreSQL image
+FROM postgres:16-alpine
 
-WORKDIR /database
-COPY . .
-RUN ./gradlew build --no-daemon
+# Set environment variables for PostgreSQL
+ENV POSTGRES_USER=sa
+ENV POSTGRES_PASSWORD=sa
+ENV POSTGRES_DB=traderx
 
-# Runtime stage with minimal JRE
-FROM eclipse-temurin:21-jre-jammy
+# Copy initialization script
+COPY initialSchema.sql /docker-entrypoint-initdb.d/
 
-WORKDIR /database
-
-# Copy only the built artifacts and necessary files
-COPY --from=builder /database/build ./build
-COPY --from=builder /database/run.sh ./run.sh
-COPY --from=builder /database/initialSchema.sql ./initialSchema.sql
-
-# Make run script executable
-RUN chmod +x ./run.sh
-
-EXPOSE 18082 18083 18084
-
-ENTRYPOINT ["./run.sh"]
+# Expose PostgreSQL port
+EXPOSE 5432

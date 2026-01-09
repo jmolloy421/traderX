@@ -1,28 +1,47 @@
-Drop Table Trades IF EXISTS;
+DROP TABLE IF EXISTS Trades;
 
-Drop Table AccountUsers IF EXISTS; 
+DROP TABLE IF EXISTS AccountUsers;
 
-Drop Table Positions IF EXISTS; 
+DROP TABLE IF EXISTS Positions;
 
-Drop Table Accounts IF EXISTS; 
+DROP TABLE IF EXISTS Accounts;
 
-Drop Sequence ACCOUNTS_SEQ IF EXISTS;
+DROP SEQUENCE IF EXISTS ACCOUNTS_SEQ;
 
-CREATE TABLE Accounts ( ID INTEGER PRIMARY KEY, DisplayName VARCHAR (50) ) ; 
+CREATE TABLE Accounts (
+    ID INTEGER PRIMARY KEY,
+    DisplayName VARCHAR(50)
+);
 
-CREATE TABLE AccountUsers ( AccountID INTEGER NOT NULL, Username VARCHAR(15) NOT NULL, PRIMARY KEY (AccountID,Username));  
+CREATE TABLE AccountUsers (
+    AccountID INTEGER NOT NULL,
+    Username VARCHAR(15) NOT NULL,
+    PRIMARY KEY (AccountID, Username),
+    FOREIGN KEY (AccountID) REFERENCES Accounts(ID)
+);
 
-ALTER TABLE AccountUsers ADD FOREIGN KEY (AccountID) References Accounts(ID); 
+CREATE TABLE Positions (
+    AccountID INTEGER,
+    Security VARCHAR(15),
+    Updated TIMESTAMP,
+    Quantity INTEGER,
+    PRIMARY KEY (AccountID, Security),
+    FOREIGN KEY (AccountID) REFERENCES Accounts(ID)
+);
 
-CREATE TABLE Positions ( AccountID INTEGER , Security VARCHAR(15) , Updated TIMESTAMP, Quantity INTEGER, Primary Key (AccountID, Security) );  
+CREATE TABLE Trades (
+    ID VARCHAR(50) PRIMARY KEY,
+    AccountID INTEGER,
+    Created TIMESTAMP,
+    Updated TIMESTAMP,
+    Security VARCHAR(15),
+    Side VARCHAR(10) CHECK (Side IN ('Buy', 'Sell')),
+    Quantity INTEGER CHECK (Quantity > 0),
+    State VARCHAR(20) CHECK (State IN ('New', 'Processing', 'Settled', 'Cancelled')),
+    FOREIGN KEY (AccountID) REFERENCES Accounts(ID)
+);
 
-Alter Table Positions ADD FOREIGN KEY (AccountID) References Accounts(ID) ; 
-
-CREATE TABLE Trades ( ID Varchar (50) Primary Key, AccountID INTEGER, Created TIMESTAMP, Updated TIMESTAMP, Security VARCHAR (15) ,  Side VARCHAR(10) check (Side in ('Buy','Sell')),  Quantity INTEGER check Quantity > 0 , State VARCHAR(20) check (State in ('New', 'Processing', 'Settled', 'Cancelled'))) ;  
-
-Alter Table Trades Add Foreign Key (AccountID) references Accounts(ID); 
-
-CREATE SEQUENCE ACCOUNTS_SEQ start with 65000 INCREMENT BY 1;
+CREATE SEQUENCE ACCOUNTS_SEQ START WITH 65000 INCREMENT BY 1;
 
 --- SAMPLE DATA ---
 
@@ -67,4 +86,4 @@ INSERT into Positions (AccountID, Security, Updated, Quantity) VALUES(22214, 'C'
 
 
 INSERT into Trades(ID, Created, Updated, Security, Side, Quantity, State, AccountID) VALUES('TRADE-52355-AABBCC', NOW(), NOW(), 'BAC', 'Sell', 2400, 'Settled', 52355); 
-INSERT into Positions (AccountID, Security, Updated, Quantity) VALUES(52355, 'BAC',NOW(), -2400); 
+INSERT into Positions (AccountID, Security, Updated, Quantity) VALUES(52355, 'BAC',NOW(), -2400);  
